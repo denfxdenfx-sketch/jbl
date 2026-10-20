@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+</head>
+<body>
+
+  {% include "sidebar.html" %}
+
+  <!-- Top bar (mobile only) -->
+  <header class="hm-topbar">
+    <button class="hm-menu-btn" onclick="sbToggle()" aria-label="Toggle sidebar">☰</button>
+    <span class="hm-topbar-title">Home</span>
+  </header>
+
+  <!-- Main -->
+  <main class="hm-main">
+
+    <h1 class="hm-greeting">Hello, {{ first_name }}! 👋</h1>
+    <p class="hm-subtitle">
+      {% if goal_name %}
+        Ready to continue your {{ goal_name }} prep?
+      {% else %}
+        Let's get you set up.
+      {% endif %}
+    </p>
+
+    {% if goal_name %}
+
+      <h2 class="hm-section-title">Your Subjects</h2>
+
+      {% if subjects %}
+        <div class="hm-subject-list">
+          {% for subject in subjects %}
+            <a href="/subjects/{{ subject.subject_id }}/topics" class="hm-subject-card">
+              <div class="hm-subject-icon">📚</div>
+              <div class="hm-subject-content">
+                <div class="hm-subject-name">{{ subject.subject_name }}</div>
+                <div class="hm-progress-bar">
+                  <div class="hm-progress-fill"
+                       style="width: {{
+                         (subject.completed_topics / subject.total_topics * 100)
+                         if subject.total_topics > 0 else 0
+                       }}%;"></div>
+                </div>
+                <div class="hm-subject-meta">
+                  {{ subject.completed_topics }} / {{ subject.total_topics }} topics completed
+                </div>
+              </div>
+              <span class="hm-subject-arrow">›</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="hm-empty">
+          <div class="hm-empty-icon">📚</div>
+          <div class="hm-empty-title">No subjects yet</div>
+          <div class="hm-empty-desc">
+            Subjects for {{ goal_name }} haven't been added yet.
+          </div>
+        </div>
+      {% endif %}
+
+    {% else %}
+
+      <div class="hm-empty">
+        <div class="hm-empty-icon">🎯</div>
+        <div class="hm-empty-title">Choose your goal</div>
+        <div class="hm-empty-desc">
+          Pick the exam you're preparing for to unlock subjects, tests, and QBank.
+        </div>
+        <a href="/goals" class="hm-btn-primary">Choose a goal →</a>
+      </div>
+
+    {% endif %}
+
+  </main>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    color: #1a202c;
+    background: #f7fafc;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Top bar — mobile only */
+  .hm-topbar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    z-index: 80;
+  }
+
+  .hm-menu-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #175e7a;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+
+  .hm-menu-btn:hover { background: #f1f5f8; }
+
+  .hm-topbar-title {
+    font-weight: 600;
+    color: #175e7a;
+    font-size: 15px;
+  }
+
+  /* Main */
+  .hm-main {
+    padding: 32px 40px;
+    max-width: 760px;
+  }
+
+  /* Desktop: sidebar is always open — push content right */
+  @media (min-width: 769px) {
+    .hm-main {
+      margin-left: 260px;
+    }
+
+    /* Force sidebar open on desktop */
+    .sb {
+      transform: translateX(0) !important;
+    }
+
+    .sb-overlay {
+      display: none !important;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .hm-topbar {
+      display: flex;
+    }
+
+    .hm-main {
+      padding: 76px 16px 32px 16px;
+      margin-left: 0;
+    }
+  }
+
+  /* Greeting */
+  .hm-greeting {
+    font-size: 28px;
+    font-weight: 700;
+    color: #175e7a;
+    margin-bottom: 4px;
+  }
+
+  .hm-subtitle {
+    color: #666;
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 600px) {
+    .hm-greeting { font-size: 22px; }
+  }
+
+  /* Section title */
+  .hm-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 32px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .hm-section-title:first-of-type {
+    margin-top: 0;
+  }
+
+  /* Subject cards */
+  .hm-subject-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 560px;   /* subject cards are narrower */
+  }
+
+  .hm-subject-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  }
+
+  .hm-subject-card:hover {
+    border-color: #5ab4c5;
+    box-shadow: 0 4px 14px rgba(90, 180, 197, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .hm-subject-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #e0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .hm-subject-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hm-subject-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 8px;
+  }
+
+  .hm-progress-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .hm-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7ecb5e, #a8dc92);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  .hm-subject-meta {
+    font-size: 13px;
+    color: #666;
+  }
+
+  .hm-subject-arrow {
+    font-size: 20px;
+    color: #bbbbbb;
+    flex-shrink: 0;
+  }
+
+  /* Empty state */
+  .hm-empty {
+    text-align: center;
+    padding: 60px 20px;
+    background: #ffffff;
+    border: 1px dashed #e2e8f0;
+    border-radius: 14px;
+    color: #888;
+  }
+
+  .hm-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .hm-empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+  }
+
+  .hm-empty-desc {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  .hm-btn-primary {
+    background: #5ab4c5;
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .hm-btn-primary:hover {
+    background: #4aa0b0;
+  }
+</style>
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Up</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 400px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 6px 0; font-size: 16px; box-sizing: border-box; }
+    .error { color: red; font-size: 14px; margin-top: 8px; }
+    .link-row { text-align: center; margin-top: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Sign Up</h1>
+  <p>Enter your email to create an account.</p>
+
+  <input id="signup-email" type="email" placeholder="Email address">
+  <button onclick="signupSendOtp()">Get OTP</button>
+  <div id="signup-error" class="error"></div>
+
+  <div class="link-row">
+    Already have an account? <a href="/login">Log in</a>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/signup.js"></script>
+</body>
+</html>

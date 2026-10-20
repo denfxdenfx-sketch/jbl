@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Your Phone</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 400px; margin: auto; }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #175e7a;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .error { color: red; font-size: 14px; margin-top: 8px; }
+    .hint { color: #666; font-size: 13px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Add your phone number</h1>
+  <p>We'll send you a code to verify it.</p>
+
+  <input id="phone" type="tel" placeholder="+919876543210">
+  <div class="hint">Include the country code (e.g. +91 for India)</div>
+  <button onclick="sendNumberOtp()">Send OTP</button>
+  <div id="number-error" class="error"></div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/signup.js"></script>
+  <script src="/static/js/setup_name.js"></script>
+
+</body>
+</html>
+
+

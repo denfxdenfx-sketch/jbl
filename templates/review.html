@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ topic.name }} — Review</title>
+</head>
+<body>
+
+  {% include "sidebar.html" %}
+
+  <header class="page-topbar">
+    <button class="page-menu-btn" onclick="sbToggle()" aria-label="Toggle sidebar">☰</button>
+    <span class="page-topbar-title">{{ topic.name }} — Review</span>
+  </header>
+
+  <main class="page-main">
+
+    <!-- Score Box -->
+    <div class="review-box score-box">
+      <h1 class="box-title">{{ topic.name }}</h1>
+      <p class="box-subtitle">{{ topic.goal_name }} · Practice Review</p>
+      
+      <div class="divider"></div>
+
+      <div class="score-hero">
+        <div class="score-number">{{ correct_count }}<span class="score-total"> / {{ total_questions }}</span></div>
+        <div class="score-label">Correct Answers</div>
+      </div>
+      
+      <a href="/topics/{{ topic.id }}/review/questions" class="btn-review">REVIEW ANSWERS</a>
+    </div>
+
+    <!-- Breakdown Box -->
+    <div class="review-box breakdown-box">
+      <div class="breakdown-stat">
+        <div class="circle-stat green">
+          <span>{{ correct_count }}</span>
+        </div>
+        <div class="stat-label">Correct</div>
+      </div>
+      
+      <div class="breakdown-stat">
+        <div class="circle-stat red">
+          <span>{{ wrong_count }}</span>
+        </div>
+        <div class="stat-label">Wrong</div>
+      </div>
+      
+      <div class="breakdown-stat">
+        <div class="circle-stat gray">
+          <span>{{ total_questions }}</span>
+        </div>
+        <div class="stat-label">Skipped / Total</div>
+      </div>
+    </div>
+
+    <div class="btn-row-bottom">
+      <a href="/subjects/{{ topic.subject_id }}/topics" class="btn-back">← Back to Topics</a>
+    </div>
+
+  </main>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; color: #1a202c; background: #f7fafc; line-height: 1.5; }
+
+  .page-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: white; border-bottom: 1px solid #e2e8f0; align-items: center; gap: 12px; padding: 0 16px; z-index: 80; }
+  .page-menu-btn { background: none; border: none; font-size: 22px; color: #175e7a; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+  .page-topbar-title { font-weight: 600; color: #175e7a; font-size: 15px; }
+
+  .page-main { padding: 40px; max-width: 760px; }
+  @media (min-width: 769px) { .page-main { margin-left: 260px; } .sb { transform: translateX(0) !important; } .sb-overlay { display: none !important; } }
+  @media (max-width: 768px) { .page-topbar { display: flex; } .page-main { padding: 76px 16px 32px 16px; margin-left: 0; } }
+
+  /* Common Box Style */
+  .review-box {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    max-width: 680px;
+    margin: 0 auto 24px auto;
+    text-align: center;
+  }
+
+  .box-title { font-size: 32px; font-weight: 800; color: #1a202c; margin-bottom: 4px; line-height: 1.2; }
+  .box-subtitle { font-size: 16px; color: #666; margin-bottom: 24px; }
+  
+  .divider { height: 2px; background: #edf2f7; width: 100%; margin-bottom: 32px; }
+
+  /* Score Hero */
+  .score-number { font-size: 56px; font-weight: 700; color: #4a5568; line-height: 1; margin-bottom: 8px; }
+  .score-total { font-size: 32px; font-weight: 400; color: #a0aec0; }
+  .score-label { font-size: 18px; color: #666; margin-bottom: 32px; }
+
+  .btn-review {
+    display: inline-block;
+    background: #82d0e3;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+  }
+  .btn-review:hover { background: #6bbcd0; }
+
+  /* Breakdown Box */
+  .breakdown-box {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 40px 20px;
+  }
+
+  .breakdown-stat { display: flex; flex-direction: column; align-items: center; }
+
+  .circle-stat {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .circle-stat.green { border: 3px solid #7ecb5e; color: #7ecb5e; }
+  .circle-stat.red { border: 3px solid #e57373; color: #e57373; }
+  .circle-stat.gray { border: 3px solid #a0aec0; color: #4a5568; }
+
+  .stat-label { font-size: 15px; color: #4a5568; font-weight: 500; }
+
+  /* Bottom back button */
+  .btn-row-bottom { text-align: center; margin-top: 12px; }
+  .btn-back { color: #4a5568; font-size: 15px; text-decoration: none; font-weight: 600; }
+  .btn-back:hover { color: #1a202c; }
+</style>
+
+</body>
+</html>

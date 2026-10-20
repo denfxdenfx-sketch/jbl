@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject.name }} — QBank Bookmarks</title>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    color: #1a202c;
+    background: #f7fafc;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ─────────────── COMPACT TOP BAR ─────────────── */
+  .topbar {
+    flex: 0 0 auto;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    color: #175e7a;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .back:hover { background: #f9fbfc; border-color: #5ab4c5; }
+
+  .topbar-title {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .topbar-title h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a202c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar-title .breadcrumb {
+    font-size: 12px;
+    color: #4a5568;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Right side: stacked controls */
+  .topbar-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .count-pill {
+    font-size: 13px;
+    font-weight: 600;
+    color: #175e7a;
+    background: #eaf6f8;
+    border: 1px solid #b9dde3;
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+
+  .topbar-sub {
+    font-size: 11px;
+    color: #4a5568;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ─────────────── MAIN AREA ─────────────── */
+  .page-main {
+    flex: 1 1 auto;
+    overflow: hidden;
+    padding: 20px 24px;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+  }
+
+  .empty {
+    color: #4a5568;
+    font-size: 15px;
+    padding: 20px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin: auto;
+  }
+
+  /* Two-panel grid — DETAIL LEFT, STACK RIGHT */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;   /* flipped from before */
+    gap: 20px;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+  }
+
+  /* ─────────────── LEFT: DETAIL PANEL ─────────────── */
+  .detail {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detail-empty {
+    color: #a0aec0;
+    text-align: center;
+    padding: 40px 0;
+    font-size: 15px;
+    margin: auto;
+  }
+
+  .detail-meta {
+    font-size: 12px;
+    font-weight: 700;
+    color: #175e7a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+
+  .detail-qtext {
+    font-size: 19px;
+    line-height: 1.5;
+    color: #1a202c;
+    font-weight: 500;
+    margin-bottom: 14px;
+    white-space: pre-wrap;
+  }
+
+  .detail-image {
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin: 12px 0;
+    display: block;
+  }
+
+  .detail-answer {
+    background: #f6fbff;
+    border: 1px solid #b9dde3;
+    border-left: 3px solid #5ab4c5;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-top: 16px;
+    white-space: pre-wrap;
+    color: #2c5b66;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .detail-answer strong {
+    font-size: 11px;
+    font-weight: 700;
+    color: #175e7a;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  /* ─────────────── RIGHT: QUESTION STACK ─────────────── */
+  .qlist {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow-y: auto;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    min-height: 0;
+  }
+
+  .qlist-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    color: #1a202c;
+    line-height: 1.4;
+    transition: background 0.15s;
+  }
+  .qlist-item:last-child { border-bottom: none; }
+  .qlist-item:hover { background: #f9fbfc; }
+  .qlist-item.active {
+    background: #5ab4c5;
+    color: white;
+  }
+
+  .qlist-item .cat {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #eaf6f8;
+    color: #175e7a;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+  .qlist-item.active .cat {
+    background: rgba(255,255,255,0.3);
+    color: white;
+  }
+
+  /* ─────────────── NAV + BUTTONS ─────────────── */
+  .detail-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .nav-group { display: flex; gap: 8px; }
+
+  .btn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #175e7a;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #f9fbfc; border-color: #5ab4c5; }
+
+  .btn-primary {
+    background: #5ab4c5;
+    color: white;
+    border: none;
+  }
+  .btn-primary:hover { background: #4aa0b0; }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:disabled:hover { background: white; border-color: #e2e8f0; }
+
+  .remove-btn {
+    background: #fff0f0;
+    border-color: #ffcdd2;
+    color: #c62828;
+  }
+  .remove-btn:hover { background: #ffebee; border-color: #e57373; }
+
+  /* ─────────────── RESPONSIVE ─────────────── */
+  @media (max-width: 720px) {
+    .topbar {
+      flex-wrap: wrap;
+      padding: 10px 16px;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .back { order: 1; }
+    .topbar-right {
+      order: 2;
+      margin-left: auto;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .topbar-title {
+      order: 3;
+      flex-basis: 100%;
+    }
+
+    .page-main { padding: 14px; flex-direction: column; }
+    .layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;   /* stack on top, detail below */
+      gap: 12px;
+    }
+    .qlist { max-height: 28vh; order: -1; }   /* stack first on mobile */
+    .detail { padding: 18px 16px; }
+    .detail-qtext { font-size: 17px; }
+    .detail-nav { flex-direction: column; align-items: stretch; }
+    .nav-group { justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ─────────────── COMPACT TOP BAR ─────────────── -->
+  <header class="topbar">
+    <a class="back" href="/qbank/bookmarks">← Back to QBank bookmarks</a>
+
+    <div class="topbar-title">
+      <h1>{{ subject.name }}</h1>
+      <span class="breadcrumb">QBank · Bookmarks</span>
+    </div>
+
+    <div class="topbar-right">
+      <span class="count-pill">
+        {{ questions|length }} question{% if questions|length != 1 %}s{% endif %}
+      </span>
+      {% if questions %}
+        <span class="topbar-sub">Click a question to preview</span>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- ─────────────── MAIN TWO-PANEL AREA ─────────────── -->
+  <main class="page-main">
+
+    {% if not questions %}
+      <p class="empty">No bookmarks in this subject yet.</p>
+    {% else %}
+
+    <div class="layout">
+
+      <!-- LEFT: detail panel -->
+      <div class="detail" id="detail">
+        <div class="detail-empty">Select a question on the left.</div>
+      </div>
+
+      <!-- RIGHT: stack of bookmarked questions -->
+      <div class="qlist" id="qlist">
+        {% for q in questions %}
+          <button class="qlist-item" type="button" data-index="{{ loop.index0 }}">
+            <span class="cat">{{ q.category_label }}</span>
+            {{ q.text[:80] }}{% if q.text|length > 80 %}…{% endif %}
+          </button>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    {% endif %}
+  </main>
+
+  {% if questions %}
+  <script>
+    window.QUESTIONS = {{ questions | tojson }};
+  </script>
+
+  <script src="{{ url_for('static', filename='js/qbank_bookmark_subject.js') }}"></script>
+  {% endif %}
+
+</body>
+</html>

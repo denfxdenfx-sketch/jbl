@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ topic.name }} — Start Quiz</title>
+</head>
+<body>
+
+  {% include "sidebar.html" %}
+
+  <header class="page-topbar">
+    <button class="page-menu-btn" onclick="sbToggle()" aria-label="Toggle sidebar">☰</button>
+    <span class="page-topbar-title">{{ topic.name }}</span>
+  </header>
+
+  <main class="page-main">
+
+    <!-- Center the content -->
+    <div class="page-content-center">
+      
+      <a href="/home" class="back-link">← Back</a>
+
+      <!-- Compact Box -->
+      <div class="hero-box">
+        <div class="hero-header">
+          <div class="hero-icon">
+            {% if 'Bio' in topic.name %}🧬
+            {% elif 'Phy' in topic.name %}⚛️
+            {% elif 'Chem' in topic.name %}⚗️
+            {% else %}📚{% endif %}
+          </div>
+          <div class="hero-title-wrap">
+            <h1 class="hero-title">{{ topic.name }}</h1>
+            {% if topic.access_level == 'paid' %}
+              <span class="pro-badge">PRO</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <hr class="hero-divider">
+
+        <div class="hero-stats">
+          <strong>{{ question_count }}</strong> Multiple Choice Qs
+        </div>
+
+        {% if question_count > 0 %}
+          <a href="/topics/{{ topic.id }}/start-quiz" class="btn-start">Start Module</a>
+        {% else %}
+          <p class="empty-text">No questions available yet.</p>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </main>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; color: #1a202c; background: #f7fafc; line-height: 1.5; }
+
+  /* Top bar / Sidebar layout */
+  .page-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: white; border-bottom: 1px solid #e2e8f0; align-items: center; gap: 12px; padding: 0 16px; z-index: 80; }
+  .page-menu-btn { background: none; border: none; font-size: 22px; color: #175e7a; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+  .page-menu-btn:hover { background: #f1f5f8; }
+  .page-topbar-title { font-weight: 600; color: #175e7a; font-size: 15px; }
+
+  .page-main { padding: 40px; max-width: 760px; }
+  @media (min-width: 769px) { .page-main { margin-left: 260px; } .sb { transform: translateX(0) !important; } .sb-overlay { display: none !important; } }
+  @media (max-width: 768px) { .page-topbar { display: flex; } .page-main { padding: 76px 16px 32px 16px; margin-left: 0; } }
+
+  /* Center content container */
+  .page-content-center {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 440px; /* Limits the max width of the entire section */
+  }
+
+  /* Back link */
+  .back-link { display: inline-block; font-size: 15px; font-weight: 600; color: #7b8af4; text-decoration: none; margin-bottom: 20px; }
+  .back-link:hover { text-decoration: underline; }
+
+  /* The compact white box */
+  .hero-box {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px 32px; /* Reduced padding */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    width: 100%;
+  }
+
+  /* Header area with icon and title */
+  .hero-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .hero-icon {
+    width: 56px;  /* Smaller icon */
+    height: 56px;
+    border-radius: 50%;
+    background: #f1f5f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+  }
+
+  .hero-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .hero-title {
+    font-size: 22px; /* Smaller title */
+    font-weight: 800;
+    color: #1a202c;
+    line-height: 1.2;
+  }
+
+  .pro-badge {
+    background: #e2e8f0;
+    color: #4a5568;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Divider */
+  .hero-divider {
+    border: none;
+    height: 2px;
+    background: #edf2f7;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  /* Stats line */
+  .hero-stats {
+    font-size: 15px;
+    color: #4a5568;
+    margin-bottom: 24px;
+  }
+  .hero-stats strong {
+    font-size: 18px;
+    color: #1a202c;
+  }
+
+  /* Big blue button */
+  .btn-start {
+    display: inline-block;
+    background: #82d0e3;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-start:hover { background: #6bbcd0; }
+
+  .empty-text { color: #888; font-size: 14px; }
+</style>
+
+</body>
+</html>

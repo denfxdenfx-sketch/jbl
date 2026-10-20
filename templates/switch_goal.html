@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Switch Goal — MyApp</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 600px; margin: auto; background: #f9fbfc; }
+    h1 { color: #175e7a; margin-bottom: 4px; }
+    .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
+
+    .goal-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px;
+      margin: 10px 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .goal-card:hover { border-color: #5ab4c5; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .goal-card.current { background: #e8f5e9; border-color: #b7e0b9; }
+
+    .goal-name { font-size: 16px; font-weight: 600; color: #1a202c; }
+    .badge {
+      font-size: 11px; padding: 3px 8px; border-radius: 12px;
+      background: #d4edda; color: #155724; font-weight: 600;
+    }
+
+    .back-link { display: inline-block; margin-top: 24px; color: #175e7a; text-decoration: none; }
+    .error { color: #c62828; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <a href="/home" class="back-link">← Back to Home</a>
+  <h1>Switch Goal</h1>
+  <p class="subtitle">Select the exam you are currently preparing for.</p>
+
+  <div id="goals-list">
+    {% for g in goals %}
+      <div class="goal-card {% if g.id == current_goal_id %}current{% endif %}"
+           data-goal-id="{{ g.id }}">
+        <span class="goal-name">{{ g.name }}</span>
+        {% if g.id == current_goal_id %}
+          <span class="badge">Current</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="error" class="error"></div>
+
+  <script>
+    const cards = document.querySelectorAll('.goal-card');
+    cards.forEach(card => {
+      card.addEventListener('click', async () => {
+        const goalId = parseInt(card.dataset.goalId, 10);
+        const res = await fetch('/switch-goal/select', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal_id: goalId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = data.redirect || '/home';
+        } else {
+          document.getElementById('error').textContent = data.message || 'Failed to switch goal';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

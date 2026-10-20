@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to QBank</title>
+  <style>
+    /* ─────────── DESIGN TOKENS ─────────── */
+    :root {
+      --teal-dark: #175e7a;
+      --teal-mid: #5ab4c5;
+      --teal-light: #b9dde3;
+      --teal-pale: #e0f2f5;
+      --text-main: #1a202c;
+      --text-muted: #4a5568;
+      --highlight-blue: #89c4e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text-main);
+      background-color: #ffffff;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* ─────────── STATIC TOP BAR ─────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #ffffff;
+      padding: 16px 48px;
+      height: 76px; /* Fixed height so the Hero can calculate 100vh minus this */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .topbar-logo {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--teal-dark);
+      letter-spacing: 1px;
+    }
+
+    .topbar-links {
+      display: flex;
+      gap: 32px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .topbar-links a {
+      color: var(--teal-dark);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .topbar-links a:hover { color: var(--teal-mid); }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-dashboard {
+      background: var(--teal-mid);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 15px;
+      transition: background 0.2s;
+    }
+    .btn-dashboard:hover { background: #4aa0b0; }
+
+    .profile-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--teal-pale);
+      color: var(--teal-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      border: 1px solid var(--teal-light);
+    }
+
+    /* ─────────── PART 1: HERO SECTION ─────────── */
+    .hero {
+      position: relative;
+      /* Fills the exact remaining screen height below the 76px topbar */
+      min-height: calc(100vh - 76px); 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 20px;
+      
+      /* The background gradient */
+      background: linear-gradient(135deg, #e0f2f5 0%, #b9dde3 100%);
+    }
+
+    .hero-badge {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 800;
+      color: var(--teal-dark);
+      max-width: 800px;
+      margin: 0 auto 32px;
+      line-height: 1.15;
+    }
+
+    .btn-hero {
+      background: #7bdcf0;
+      color: var(--teal-dark);
+      border: none;
+      padding: 18px 48px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(90, 180, 197, 0.3);
+      margin-bottom: 20px;
+    }
+    .btn-hero:hover {
+      background: #a2e9f7;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--teal-dark);
+      border: none;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-secondary:hover { text-decoration: underline; }
+
+    /* Floating Announcement Pill */
+    .announcement-pill {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      padding: 16px 32px;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: var(--teal-dark);
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      width: max-content;
+      max-width: 90%;
+    }
+    .pill-link {
+      color: var(--teal-dark);
+      text-decoration: none;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .pill-link:hover { text-decoration: underline; }
+
+    /* ─────────── PART 2: FEATURES SECTION ─────────── */
+    .features-section {
+      padding: 100px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-heading {
+      text-align: center;
+      font-size: 44px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 80px;
+    }
+
+    .features-heading span {
+      background-color: #dceefb;
+      color: var(--highlight-blue);
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 60px 50px;
+    }
+
+    .feature-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .feature-number {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--highlight-blue);
+      margin-bottom: 12px;
+    }
+
+    .feature-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #000000;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+
+    .feature-desc {
+      font-size: 16px;
+      color: #555555;
+      line-height: 1.6;
+    }
+
+    /* ─────────── PART 3: TESTIMONIALS ─────────── */
+    .testimonials-section {
+      padding: 100px 40px;
+      background: #f8fbfc;
+    }
+
+    .testimonials-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 60px;
+    }
+
+    .testimonial-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      border: 1px solid var(--teal-light);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stars {
+      color: #f6ad55;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .testimonial-text {
+      font-size: 16px;
+      color: var(--text-main);
+      line-height: 1.6;
+      font-style: italic;
+      flex-grow: 1;
+      margin-bottom: 24px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid #edf2f7;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--teal-pale);
+      color: var(--teal-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .user-details h4 {
+      font-size: 16px;
+      color: var(--teal-dark);
+      margin-bottom: 2px;
+    }
+
+    .user-details p {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* ─────────── RESPONSIVE ─────────── */
+    @media (max-width: 1024px) {
+      .features-grid, .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-heading { font-size: 36px; }
+    }
+    @media (max-width: 768px) {
+      .topbar { flex-direction: column; height: auto; padding: 16px; gap: 16px; }
+      .topbar-links { flex-wrap: wrap; justify-content: center; }
+      .hero { min-height: calc(100vh - 150px); } /* Adjust for taller mobile header */
+      .features-grid, .testimonials-grid { grid-template-columns: 1fr; gap: 40px; }
+      .hero h1 { font-size: 38px; }
+      .announcement-pill { flex-direction: column; border-radius: 16px; gap: 12px; padding: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STATIC TOP BAR -->
+  <nav class="topbar">
+    <div class="topbar-logo">QBANK</div>
+    <div class="topbar-links">
+      <a href="#">NEET PG</a>
+      <a href="#">Plans</a>
+      <a href="#">Careers</a>
+      <a href="#">Contact</a>
+    </div>
+    <div class="topbar-actions">
+      <a href="/home" class="btn-dashboard">Dashboard</a>
+      <div class="profile-icon">👤</div>
+    </div>
+  </nav>
+
+  <!-- PART 1: HERO -->
+  <header class="hero">
+    <div class="hero-badge">🏆</div>
+    <h1>The Gold Standard for NEET PG - NEXT</h1>
+    
+    <button onclick="onCheckClick()" class="btn-hero">Go to dashboard</button>
+    
+    <button onclick="onViewPlansClick()" class="btn-secondary">
+      View Plans <span>›</span>
+    </button>
+
+    <!-- Floating Pill -->
+    <div class="announcement-pill">
+      <span>Edition 8.5 | Clinical Edge is live now</span>
+      <a href="#" class="pill-link">Know more <span>›</span></a>
+    </div>
+  </header>
+
+  <!-- PART 2: FEATURES -->
+  <section class="features-section">
+    <h2 class="features-heading">
+      What makes <span>QBank complete?</span>
+    </h2>
+
+    <div class="features-grid">
+      
+      <div class="feature-card">
+        <div class="feature-number">01</div>
+        <h3 class="feature-title">Concept-based learning</h3>
+        <p class="feature-desc">QBank MCQs and Videos are structured in such a way that you understand the important concepts in each topic before you learn facts. The focus is on high-yield topics and repeat MCQs.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-number">02</div>
+        <h3 class="feature-title">SOLVE MCQs as opposed to READING them</h3>
+        <p class="feature-desc">Since the exams are computer-based, practising MCQs is critical. This helps improve your educated guessing, thereby helping you tackle unsure questions better, especially when negative marking is involved.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-number">03</div>
+        <h3 class="feature-title">Error Free, Evidence-Based</h3>
+        <p class="feature-desc">Every content is peer-reviewed and comes with the latest edition of standard textbooks as references. Also, our doctors take them through multiple levels of stringent review to make sure there's no room for error.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-number">04</div>
+        <h3 class="feature-title">Makes you exam-ready</h3>
+        <p class="feature-desc">Test Series simulates the real exam, making sure you do not encounter any surprises on the big day. All MCQs are of extremely high probability, which makes you familiar with the actual pattern of questions.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-number">05</div>
+        <h3 class="feature-title">Retain 30% more of what you read</h3>
+        <p class="feature-desc">Our modules employ Spaced Repetition, a learning technique that is proven to improve retention. In a study conducted among 8600 students, the group that used QBank to study a topic performed significantly better.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-number">06</div>
+        <h3 class="feature-title">Be part of the largest Pan-India test series</h3>
+        <p class="feature-desc">Our test series have set a record with the largest number of participants nation-wide. Participate in mock tests on a Laptop/Desktop to simulate the real exam. Take the test when it's live to get an accurate all-India rank.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PART 3: FEEDBACK / TESTIMONIALS -->
+  <section class="testimonials-section">
+    <div class="testimonials-container">
+      
+      <h2 class="features-heading">
+        What our <span>students say</span>
+      </h2>
+
+      <div class="testimonials-grid">
+        
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"I used the QBank daily to prepare for my MBBS Prof exams. The explanations were so detailed that I didn't even need to open my textbooks for revision. Scored 78% aggregate!"</p>
+          <div class="user-info">
+            <div class="avatar">AS</div>
+            <div class="user-details">
+              <h4>Anjali Sharma</h4>
+              <p>MBBS Final Year, AIIMS Delhi</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"The spaced repetition feature is a game-changer. I retained concepts much better for my university exams, especially Pathology and Pharmacology. Highly recommended."</p>
+          <div class="user-info">
+            <div class="avatar">RV</div>
+            <div class="user-details">
+              <h4>Rahul Verma</h4>
+              <p>3rd Year, CMC Vellore</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"The mock tests feel exactly like the real NEET PG interface. Using this app helped me manage my time perfectly and get rid of exam anxiety. Thank you!"</p>
+          <div class="user-info">
+            <div class="avatar">PK</div>
+            <div class="user-details">
+              <h4>Dr. Priya Kapoor</h4>
+              <p>NEET PG AIR 452</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Your JS Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/check.js"></script>
+  <script src="/static/js/view_plans.js"></script>
+</body>
+</html>

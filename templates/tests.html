@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tests — MyApp</title>
+</head>
+<body>
+
+  {% include "sidebar.html" %}
+
+  <header class="page-topbar">
+    <button class="page-menu-btn" onclick="sbToggle()" aria-label="Toggle sidebar">☰</button>
+    <span class="page-topbar-title">Tests</span>
+  </header>
+
+  <main class="page-main">
+
+    <h1 class="page-heading">Tests</h1>
+    {% if goal %}
+      <p class="page-subheading">Goal: <strong>{{ goal.name }}</strong></p>
+    {% endif %}
+
+    {% if not goal %}
+
+      <div class="page-empty">
+        <div class="page-empty-icon">🎯</div>
+        <div class="page-empty-title">Choose a goal</div>
+        <div class="page-empty-desc">
+          You need to pick a goal before taking tests.
+        </div>
+        <a href="/goals" class="page-btn-primary">Choose a goal →</a>
+      </div>
+
+    {% elif not tests %}
+
+      <div class="page-empty">
+        <div class="page-empty-icon">📝</div>
+        <div class="page-empty-title">No tests available</div>
+        <div class="page-empty-desc">
+          Tests for {{ goal.name }} haven't been published yet.
+        </div>
+      </div>
+
+    {% else %}
+
+      <div class="test-list">
+        {% for t in tests %}
+          <div class="test-card {% if t.locked %}locked{% endif %}">
+
+            <div class="test-header">
+              <div class="test-title">{{ t.name }}</div>
+              {% if t.test_topic_name %}
+                <div class="test-topic">{{ t.test_topic_name }}</div>
+              {% endif %}
+            </div>
+
+            <div class="test-meta">
+              <span class="test-meta-item">⏱ {{ t.duration_minutes }} min</span>
+              <span class="test-meta-item">🎯 {{ t.total_marks }} marks</span>
+              <span class="test-meta-item badge-{{ t.access_level }}">{{ t.access_level|upper }}</span>
+            </div>
+
+            <div class="test-action">
+              {% if t.locked %}
+                <a href="/plans" class="test-btn test-btn-locked">
+                  🔒 Subscribe to unlock
+                </a>
+              {% else %}
+                <form method="POST" action="/tests/{{ t.id }}/start" style="display: inline;">
+                  <button type="submit" class="test-btn test-btn-start {% if t.completed %}completed{% endif %}">
+                    {% if t.completed %}✅ View Review{% else %}▶ Start Test{% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    {% endif %}
+
+  </main>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    color: #1a202c;
+    background: #f7fafc;
+    line-height: 1.5;
+  }
+
+  .page-topbar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    z-index: 80;
+  }
+  .page-menu-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #175e7a;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+  .page-menu-btn:hover { background: #f1f5f8; }
+  .page-topbar-title {
+    font-weight: 600;
+    color: #175e7a;
+    font-size: 15px;
+  }
+
+  .page-main {
+    padding: 32px 40px;
+    max-width: 760px;
+  }
+  @media (min-width: 769px) {
+    .page-main { margin-left: 260px; }
+    .sb { transform: translateX(0) !important; }
+    .sb-overlay { display: none !important; }
+  }
+  @media (max-width: 768px) {
+    .page-topbar { display: flex; }
+    .page-main { padding: 76px 16px 32px 16px; margin-left: 0; }
+  }
+
+  .page-heading {
+    font-size: 28px;
+    font-weight: 700;
+    color: #175e7a;
+    margin-bottom: 4px;
+  }
+  .page-subheading {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .test-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 640px;
+  }
+
+  .test-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .test-card:hover {
+    border-color: #5ab4c5;
+    box-shadow: 0 4px 14px rgba(90, 180, 197, 0.08);
+  }
+  .test-card.locked {
+    background: #fafbfc;
+    opacity: 0.85;
+  }
+
+  .test-header {
+    margin-bottom: 12px;
+  }
+  .test-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 4px;
+  }
+  .test-topic {
+    font-size: 13px;
+    color: #888;
+  }
+
+  .test-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #4a5568;
+  }
+  .test-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .badge-free {
+    background: #d4edda;
+    color: #155724;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .badge-paid {
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .test-action {
+    margin-top: 4px;
+  }
+
+  .test-btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.12s;
+  }
+  .test-btn-start {
+    background: #5ab4c5;
+    color: #ffffff;
+  }
+  .test-btn-start:hover { background: #4aa0b0; }
+  .test-btn-start.completed {
+    background: #7ecb5e;
+  }
+  .test-btn-start.completed:hover { background: #6dbb50; }
+  .test-btn-locked {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffd97a;
+  }
+  .test-btn-locked:hover { background: #ffeaa3; }
+
+  .page-empty {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border: 1px dashed #e2e8f0;
+    border-radius: 14px;
+    color: #888;
+  }
+  .page-empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .page-empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+  }
+  .page-empty-desc {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 20px;
+  }
+  .page-btn-primary {
+    background: #5ab4c5;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .page-btn-primary:hover { background: #4aa0b0; }
+
+  @media (max-width: 600px) {
+    .page-heading { font-size: 22px; }
+    .test-meta { gap: 8px; font-size: 12px; }
+  }
+</style>
+
+</body>
+</html>

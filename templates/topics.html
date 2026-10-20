@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject.name }} — Chapters</title>
+</head>
+<body>
+
+  {% include "sidebar.html" %}
+
+  <header class="page-topbar">
+    <button class="page-menu-btn" onclick="sbToggle()" aria-label="Toggle sidebar">☰</button>
+    <span class="page-topbar-title">{{ subject.name }}</span>
+  </header>
+
+  <main class="page-main">
+
+    <h1 class="page-heading">{{ subject.name }}</h1>
+    <p class="page-subheading">Goal: {{ subject.goal_name }}</p>
+
+    {% if not chapters %}
+      <div class="page-empty">
+        <div class="page-empty-icon">📚</div>
+        <div class="page-empty-title">No chapters available</div>
+        <div class="page-empty-desc">Content for {{ subject.name }} hasn't been added yet.</div>
+      </div>
+    {% endif %}
+
+    <div class="chapter-list">
+      {% for chapter in chapters %}
+        <div class="chapter-block">
+          <h2 class="chapter-title">{{ chapter.name }}</h2>
+
+          {% if not chapter.topics %}
+            <p class="chapter-empty">No topics yet in this chapter.</p>
+          {% endif %}
+
+          <div class="topic-list">
+            {% for topic in chapter.topics %}
+              <a href="/topics/{{ topic.id }}/start" class="topic-card {% if topic.locked %}locked{% endif %}">
+                <div class="topic-content">
+                  <div class="topic-name">
+                    {{ topic.name }}
+                    <span class="badge badge-{{ topic.access_level }}">{{ topic.access_level|upper }}</span>
+                  </div>
+                </div>
+                <span class="topic-icon">
+                  {% if topic.locked %}🔒
+                  {% elif topic.status == 'completed' %}✅
+                  {% else %}▶️{% endif %}
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  </main>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; color: #1a202c; background: #f7fafc; line-height: 1.5; }
+
+  .page-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: white; border-bottom: 1px solid #e2e8f0; align-items: center; gap: 12px; padding: 0 16px; z-index: 80; }
+  .page-menu-btn { background: none; border: none; font-size: 22px; color: #175e7a; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+  .page-menu-btn:hover { background: #f1f5f8; }
+  .page-topbar-title { font-weight: 600; color: #175e7a; font-size: 15px; }
+
+  .page-main { padding: 32px 40px; max-width: 760px; }
+  @media (min-width: 769px) { .page-main { margin-left: 260px; } .sb { transform: translateX(0) !important; } .sb-overlay { display: none !important; } }
+  @media (max-width: 768px) { .page-topbar { display: flex; } .page-main { padding: 76px 16px 32px 16px; margin-left: 0; } }
+
+  .page-heading { font-size: 28px; font-weight: 700; color: #175e7a; margin-bottom: 4px; }
+  .page-subheading { color: #666; font-size: 14px; margin-bottom: 24px; }
+
+  .chapter-list { display: flex; flex-direction: column; gap: 24px; max-width: 560px; }
+  .chapter-block { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; }
+  .chapter-title { color: #175e7a; font-size: 18px; font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #edf2f7; }
+  .chapter-empty { color: #888; font-size: 13px; }
+
+  .topic-list { display: flex; flex-direction: column; gap: 8px; }
+  .topic-card { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; text-decoration: none; color: #1a202c; transition: border-color 0.15s, background 0.15s; }
+  .topic-card:hover { border-color: #5ab4c5; background: #f9fbfc; }
+  .topic-card.locked { background: #f8f8f8; color: #999; cursor: not-allowed; border-color: #eee; }
+  .topic-card.locked:hover { border-color: #eee; background: #f8f8f8; }
+
+  .topic-name { font-size: 16px; font-weight: 500; }
+  .topic-icon { font-size: 20px; margin-left: 12px; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; margin-left: 8px; letter-spacing: 0.3px; }
+  .badge-free { background: #d4edda; color: #155724; }
+  .badge-paid { background: #fff3cd; color: #856404; }
+
+  .page-empty { text-align: center; padding: 60px 20px; background: white; border: 1px dashed #e2e8f0; border-radius: 14px; color: #888; max-width: 560px; }
+  .page-empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .page-empty-title { font-size: 16px; font-weight: 600; color: #4a5568; margin-bottom: 6px; }
+  .page-empty-desc { font-size: 14px; color: #888; }
+</style>
+
+</body>
+</html>
