@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 400px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 6px 0; font-size: 16px; box-sizing: border-box; }
+    .divider { text-align: center; color: #888; margin: 16px 0; }
+    .link-row { text-align: center; margin-top: 20px; font-size: 14px; }
+    .error { color: red; font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Login</h1>
+
+  <!-- Phone + OTP -->
+  <h3>Login with Phone</h3>
+  <input id="phone" type="tel" placeholder="Phone number (e.g. 9876543210)">
+  <button onclick="sendOtp()">Get OTP</button>
+  <div id="phone-error" class="error"></div>
+
+  <div class="divider">— or —</div>
+
+  <!-- Google -->
+  <button onclick="signInWithGoogle()">Sign in with Google</button>
+
+  <div class="divider">— or —</div>
+
+  <!-- Email -->
+  <button onclick="signInWithEmail()">Sign in with Email</button>
+
+  <div class="link-row">
+    New user? <a href="/signup">Sign up</a>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/signin.js"></script>
+</body>
+</html>

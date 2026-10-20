@@ -1,0 +1,18 @@
+.goal-dropdown select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f9fbfc;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #175e7a;
+  cursor: pointer;
+}
+
+.goal-dropdown select:hover,
+.goal-dropdown select:focus {
+  outline: none;
+  border-color: #5ab4c5;
+}

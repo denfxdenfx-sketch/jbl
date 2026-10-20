@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Choose Your Goal</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 500px; margin: auto; }
+    .goal-option {
+      display: block;
+      padding: 16px;
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      background: white;
+      transition: all 0.2s;
+      font-size: 18px;
+      width: 100%;
+      text-align: left;
+    }
+    .goal-option:hover { border-color: #175e7a; }
+    .goal-option.selected {
+      border-color: #175e7a;
+      background: #e8f4f8;
+      font-weight: bold;
+    }
+    .proceed-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      background: #175e7a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .proceed-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .error { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Choose your goal</h1>
+  <p>Pick the exam or track you want to prepare for.</p>
+
+  <!-- Jinja loop over the goals passed from the server -->
+  {% for goal in goals %}
+    <button
+      class="goal-option"
+      data-goal-id="{{ goal.id }}"
+      onclick="selectGoal({{ goal.id }}, this)"
+    >
+      {{ goal.name }}
+    </button>
+  {% endfor %}
+
+  <button
+    id="proceed-btn"
+    class="proceed-btn"
+    onclick="proceedWithGoal()"
+    disabled
+  >
+    Proceed
+  </button>
+
+  <div id="goal-error" class="error"></div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/signup.js"></script>
+</body>
+</html>

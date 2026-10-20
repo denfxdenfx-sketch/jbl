@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ topic.name }} — Summary</title>
+</head>
+<body>
+  <h1>{{ topic.name }}</h1>
+  <p>Goal: {{ topic.goal_name }}</p>
+
+  <hr>
+
+  <h2>Your Score</h2>
+  <p>Total questions: <strong>{{ total_questions }}</strong></p>
+  <p>Attempted: <strong>{{ correct_count + wrong_count }}</strong></p>
+
+  <p>Correct: <strong style="color:green;">{{ correct_count }}</strong></p>
+  <p>Wrong: <strong style="color:red;">{{ wrong_count }}</strong></p>
+
+  <hr>
+
+  <p>
+    <a href="/subjects/{{ topic.subject_id }}/topics">← Back to topics</a>
+  </p>
+  <p>
+    <a href="/topics/{{ topic.id }}/review">View Review →</a>
+  </p>
+</body>
+</html>

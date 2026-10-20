@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Enter OTP</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; max-width: 400px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 6px 0; font-size: 16px; box-sizing: border-box; }
+    .error { color: red; font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Enter OTP</h1>
+  <p>We sent a 6-digit code to <strong>{{ email }}</strong></p>
+
+  <input id="otp" type="text" placeholder="6-digit code" maxlength="6">
+  <button onclick="verifyEmailOtp()">Verify</button>
+  <div id="otp-error" class="error"></div>
+
+  <p style="margin-top:20px;"><a href="/login/email">Back</a></p>
+
+  <script>
+    const EMAIL = "{{ email }}";
+  </script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/signin.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ topic.name }} — Quiz</title>
+</head>
+<body>
+
+  <main class="page-main">
+
+    <div class="quiz-wrapper">
+
+      <div class="quiz-header">
+        <div>
+          <h1 class="page-heading">{{ topic.name }}</h1>
+          <div class="quiz-progress">
+            Question <strong id="progress">1</strong> of <strong>{{ questions|length }}</strong>
+          </div>
+        </div>
+        <div class="quiz-actions">
+          <button class="btn-action" onclick="toggleBookmark()" id="bookmark-btn">☆ Bookmark</button>
+          <button class="btn-action btn-exit" onclick="confirmExit()">Exit</button>
+        </div>
+      </div>
+
+      <!-- Question Text -->
+      <div class="question-text-wrap">
+        <h2 id="question-text"></h2>
+        <img id="question-image" style="display:none; max-width:100%; border-radius:8px; margin-top:16px;">
+      </div>
+
+      <!-- Options Grid -->
+      <div id="options-container"></div>
+
+      <!-- Explanation (Hidden by default) -->
+      <div id="explanation-box" class="explanation-box" style="display:none;">
+        <div class="explanation-label">Explanation</div>
+        <p id="explanation-text"></p>
+        <img id="explanation-image" style="display:none; max-width:100%; border-radius:8px; margin-top:10px;">
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FIXED BOTTOM NAV -->
+  <div class="fixed-bottom-nav">
+    <button class="btn-secondary" onclick="goPrev()" id="prev-btn">← Previous</button>
+    <button class="btn-primary" onclick="goNext()" id="next-btn">Next →</button>
+  </div>
+
+  <!-- Exit Modal -->
+  <div id="exit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h3>Leave Quiz?</h3>
+      <p>Are you sure? Your progress is saved.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeExit()">Cancel</button>
+        <a href="/home" class="btn-danger">Yes, Exit</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server data -->
+  <script>
+    const TOPIC_ID = {{ topic.id }};
+    const QUESTIONS = {{ questions | tojson }};
+    const PAST_ANSWERS = {{ past_answers | tojson }};
+    const START_INDEX = {{ start_index }};
+    const BOOKMARKED_IDS = {{ bookmarked_ids | tojson }};
+  </script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    font-size: 15px; 
+    color: #1a202c; 
+    background: #f7fafc; 
+    line-height: 1.5; 
+    padding-bottom: 80px; 
+  }
+
+  /* Full-width container */
+  .page-main { 
+    padding: 32px 24px; 
+    max-width: 900px; 
+    margin: 0 auto; 
+  }
+
+  .quiz-wrapper { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+  }
+  
+  .quiz-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+    flex-wrap: wrap; 
+    gap: 12px; 
+  }
+  .page-heading { font-size: 24px; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+  .quiz-progress { font-size: 14px; color: #4a5568; font-weight: 500; }
+  
+  .quiz-actions { display: flex; gap: 10px; }
+  .btn-action { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #4a5568; cursor: pointer; }
+  .btn-action:hover { background: #f9fbfc; border-color: #cbd5e0; }
+  .btn-exit { color: #c62828; border-color: #ffcdd2; }
+  .btn-exit:hover { background: #ffebee; border-color: #e57373; }
+
+  .question-text-wrap { margin-top: 10px; }
+  #question-text { font-size: 20px; line-height: 1.5; color: #1a202c; font-weight: 500; }
+
+  /* Options Grid */
+  #options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  @media (max-width: 600px) { #options-container { grid-template-columns: 1fr; } }
+  
+  #options-container button { 
+    width: 100%; 
+    text-align: left; 
+    padding: 20px 24px; 
+    background: white; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 10px; 
+    font-size: 16px; 
+    color: #1a202c; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    min-height: 80px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+    transition: all 0.15s; 
+  }
+  #options-container button:hover { background: #f9fbfc; border-color: #cbd5e0; box-shadow: 0 4px 8px rgba(0,0,0,0.04); }
+  #options-container button.selected { background: #e0f2f5; border-color: #5ab4c5; font-weight: 600; color: #175e7a; box-shadow: 0 0 0 2px #5ab4c5; }
+  #options-container button.correct { background: #e8f5e9; border-color: #7ecb5e; color: #2e7d32; font-weight: 600; box-shadow: none; }
+  #options-container button.wrong { background: #ffebee; border-color: #e57373; color: #c62828; font-weight: 600; box-shadow: none; }
+
+  /* Explanation */
+  .explanation-box { background: #f6fbff; border: 1px solid #b9dde3; border-radius: 10px; padding: 20px; }
+  .explanation-label { font-size: 12px; font-weight: 700; color: #175e7a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  #explanation-text { font-size: 15px; line-height: 1.5; color: #2c5b66; white-space: pre-wrap; }
+
+  /* Bottom Nav */
+  .fixed-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e2e8f0; padding: 16px 32px; display: flex; justify-content: center; gap: 16px; z-index: 60; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03); }
+  .fixed-bottom-nav button { width: 180px; padding: 14px 24px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: #5ab4c5; color: white; border: none; transition: background 0.15s; }
+  .btn-primary:hover { background: #4aa0b0; }
+  .btn-secondary { background: white; color: #175e7a; border: 1px solid #e2e8f0; transition: all 0.15s; }
+  .btn-secondary:hover { background: #f9fbfc; border-color: #5ab4c5; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: white; padding: 24px; border-radius: 14px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .modal-box h3 { font-size: 20px; color: #1a202c; margin-bottom: 8px; }
+  .modal-box p { color: #4a5568; margin-bottom: 20px; font-size: 15px; }
+  .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+  .btn-danger { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-danger:hover { background: #ffcdd2; }
+</style>
+
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+
+</body>
+</html>

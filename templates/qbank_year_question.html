@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ topic.name }} — {{ category.label }} ({{ year }} {{ exam_type|capitalize }}) — QBank</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='qbank_question.css') }}">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    color: #1a202c;
+    background: #f7fafc;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;              /* single screen, no page scroll */
+  }
+
+  /* ─────────────── COMPACT TOP BAR ─────────────── */
+  .topbar {
+    flex: 0 0 auto;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    color: #175e7a;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .back-link:hover { background: #f9fbfc; border-color: #5ab4c5; }
+
+  .topbar-title {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .topbar-title h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a202c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar-title .breadcrumb {
+    font-size: 12px;
+    color: #4a5568;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .reveal-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: #4a5568;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .reveal-toggle input {
+    width: 15px; height: 15px;
+    accent-color: #5ab4c5;
+    cursor: pointer;
+  }
+
+  .progress-pill {
+    font-size: 13px;
+    font-weight: 600;
+    color: #175e7a;
+    background: #eaf6f8;
+    border: 1px solid #b9dde3;
+    padding: 6px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  /* ─────────────── MAIN SCROLL AREA ─────────────── */
+  .page-main {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 20px 24px 100px;
+  }
+
+  .empty {
+    color: #4a5568;
+    font-size: 15px;
+    padding: 20px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  #yroot { max-width: 900px; margin: 0 auto; }
+
+  /* ─────────────── QUESTION CARD ─────────────── */
+  .qcard {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+
+  .qmeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #4a5568;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .bookmark-btn {
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .bookmark-btn:hover { background: #f9fbfc; border-color: #cbd5e0; }
+
+  .qtext {
+    font-size: 19px;
+    line-height: 1.5;
+    color: #1a202c;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  .qimage {
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  /* ─────────────── ANSWER BOX ─────────────── */
+  .answer {
+    background: #f6fbff;
+    border: 1px solid #b9dde3;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 14px;
+  }
+  .answer strong {
+    font-size: 11px;
+    font-weight: 700;
+    color: #175e7a;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .answer > div {
+    font-size: 15px;
+    line-height: 1.5;
+    color: #2c5b66;
+    white-space: pre-wrap;
+  }
+  .answer.hidden { display: none; }
+
+  /* ─────────────── BUTTONS ─────────────── */
+  .btnrow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    background: white;
+    color: #175e7a;
+    border: 1px solid #e2e8f0;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #f9fbfc; border-color: #5ab4c5; }
+
+  .btn-primary {
+    background: #5ab4c5;
+    color: white;
+    border: none;
+  }
+  .btn-primary:hover { background: #4aa0b0; }
+
+  /* ─────────────── NOTES ─────────────── */
+  .notes-block { margin-top: 16px; }
+
+  .notes-input {
+    width: 100%;
+    min-height: 70px;
+    max-height: 120px;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1a202c;
+    background: #f9fbfc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    resize: vertical;
+    line-height: 1.5;
+    transition: all 0.15s;
+  }
+  .notes-input:focus {
+    outline: none;
+    background: white;
+    border-color: #5ab4c5;
+    box-shadow: 0 0 0 2px rgba(90, 180, 197, 0.2);
+  }
+  .notes-input::placeholder { color: #a0aec0; }
+
+  .save-status {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2e7d32;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .save-status.visible { opacity: 1; }
+
+  /* ─────────────── FIXED BOTTOM NAV ─────────────── */
+  .nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    z-index: 60;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+  }
+  .nav .btn {
+    width: 180px;
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+  }
+
+  /* ─────────────── MODAL ─────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay[hidden] { display: none; }
+
+  .modal {
+    background: white;
+    padding: 24px;
+    border-radius: 14px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  .modal h3 { font-size: 20px; color: #1a202c; margin-bottom: 8px; }
+  .modal p  { color: #4a5568; margin-bottom: 20px; font-size: 15px; }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .modal-actions .btn { padding: 10px 16px; font-size: 14px; }
+
+  /* ─────────────── RESPONSIVE ─────────────── */
+  @media (max-width: 720px) {
+    .topbar { flex-wrap: wrap; padding: 10px 16px; gap: 10px; }
+    .topbar-title { order: 3; flex-basis: 100%; }
+    .topbar-right { margin-left: auto; }
+    .reveal-toggle span { display: none; }
+  }
+  @media (max-width: 600px) {
+    .page-main { padding: 14px 14px 96px; }
+    .qcard { padding: 18px 16px; }
+    .qtext { font-size: 17px; }
+    .nav { padding: 10px 14px; gap: 10px; }
+    .nav .btn { width: auto; flex: 1; }
+    .modal-actions { flex-direction: column-reverse; }
+    .modal-actions .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ─────────────── COMPACT TOP BAR ─────────────── -->
+  <header class="topbar">
+    <a href="/qbank/years/{{ year }}/{{ exam_type }}/subjects/{{ topic.subject_id }}/topics" class="back-link">← Back to topics</a>
+
+    <div class="topbar-title">
+      <h1>{{ topic.name }}</h1>
+      <span class="breadcrumb">
+        {{ year }} {{ exam_type|capitalize }} · {{ category.label }}
+        {% if review_mode %} · Review mode{% endif %}
+      </span>
+    </div>
+
+    <div class="topbar-right">
+      {% if questions %}
+        <label class="reveal-toggle">
+          <input type="checkbox" id="reveal-all">
+          <span>Show answers automatically</span>
+        </label>
+        <span class="progress-pill" id="progress-pill">1 / {{ questions|length }}</span>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- ─────────────── MAIN SCROLL AREA ─────────────── -->
+  <main class="page-main">
+
+    {% if not questions %}
+      <p class="empty">No questions in this section.</p>
+    {% else %}
+
+    <div id="yroot"
+         data-total="{{ questions|length }}"
+         data-review="{{ '1' if review_mode else '0' }}"
+         data-year="{{ year }}"
+         data-exam-type="{{ exam_type }}"
+         data-goal-id="{{ topic.goal_id }}"
+         data-subject-id="{{ topic.subject_id }}">
+
+      {% for q in questions %}
+        <div class="qcard"
+             data-index="{{ loop.index0 }}"
+             data-qid="{{ q.id }}"
+             data-topic-id="{{ topic.id }}"
+             data-category-id="{{ category.id }}"
+             data-complete-url="/qbank/topics/{{ topic.id }}/categories/{{ category.id }}/complete"
+             {% if not loop.first %}hidden{% endif %}>
+
+          <div class="qmeta">
+            Question {{ loop.index }} of {{ questions|length }}
+            <button class="bookmark-btn"
+                    data-qid="{{ q.id }}"
+                    type="button"
+                    aria-label="Bookmark">
+              {% if q.id in bookmarks %}⭐{% else %}☆{% endif %}
+            </button>
+          </div>
+
+          <div class="qtext">{{ q.text }}</div>
+          {% if q.image_path %}
+            <img class="qimage" src="/static/uploads/{{ q.image_path }}" alt="">
+          {% endif %}
+
+          <div class="answer hidden" id="ans-{{ loop.index0 }}">
+            <strong>Answer:</strong>
+            <div>{{ q.answer }}</div>
+            {% if q.answer_image_path %}
+              <img class="qimage" src="/static/uploads/{{ q.answer_image_path }}" alt="">
+            {% endif %}
+          </div>
+
+          <div class="btnrow">
+            <button class="btn show-answer-btn" type="button"
+                    data-index="{{ loop.index0 }}">Show answer</button>
+          </div>
+
+          <div class="notes-block">
+            <textarea class="notes-input"
+                      id="notes-{{ loop.index0 }}"
+                      placeholder="Your notes for this question...">{{ notes.get(q.id, '') }}</textarea>
+            <div class="btnrow">
+              <button class="btn btn-primary save-notes-btn"
+                      type="button"
+                      data-qid="{{ q.id }}"
+                      data-index="{{ loop.index0 }}">Save notes</button>
+              <span class="save-status" id="save-status-{{ loop.index0 }}"></span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% endif %}
+  </main>
+
+  <!-- ─────────────── FIXED BOTTOM NAV ─────────────── -->
+  {% if questions %}
+  <div class="nav">
+    <button class="btn" id="prev-btn" type="button">← Previous</button>
+    <button class="btn btn-primary" id="next-btn" type="button">Next →</button>
+  </div>
+  {% endif %}
+
+  <!-- Complete Section dialog -->
+  <div class="modal-overlay" id="complete-modal" hidden>
+    <div class="modal">
+      <h3>Section complete</h3>
+      <p>Mark this section as complete and move on?</p>
+      <div class="modal-actions">
+        <button class="btn" id="cancel-complete" type="button">Cancel</button>
+        <button class="btn" id="stay-complete" type="button">Stay</button>
+        <button class="btn btn-primary" id="next-complete" type="button">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='qbank_year_paper.js') }}"></script>
+</body>
+</html>

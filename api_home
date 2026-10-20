@@ -1,0 +1,73 @@
+# api_home.py
+from flask import Blueprint, jsonify, g, session
+from db import db_cursor
+from api_auth import api_login_required
+
+api_home_bp = Blueprint("api_home", __name__, url_prefix="/api")
+
+
+@api_home_bp.route("/home")
+@api_login_required
+def api_home():
+    """Return the current user's home data as JSON."""
+    user_id = g.user_id
+
+    with db_cursor() as cur:
+        # 1. Load user + goal
+        cur.execute("""
+            SELECT
+                u.first_name,
+                u.current_goal_id,
+                g.name AS goal_name
+            FROM users u
+            LEFT JOIN goals g ON u.current_goal_id = g.id
+            WHERE u.id = %s
+        """, (user_id,))
+        user = cur.fetchone()
+
+        # 2. No goal selected yet?
+        if not user or not user["current_goal_id"]:
+            return jsonify(
+                success=True,
+                first_name=(user or {}).get("first_name") or "there",
+                goal_name=None,
+                subjects=[],
+            )
+
+        # 3. Load subjects with topic progress
+        cur.execute("""
+            SELECT
+                s.id            AS subject_id,
+                s.name          AS subject_name,
+                COUNT(t.id)     AS total_topics,
+                COUNT(p.id) FILTER (WHERE p.status = 'completed') AS completed_topics
+            FROM subjects s
+            LEFT JOIN chapters c ON c.subject_id = s.id
+            LEFT JOIN topics t
+                ON t.chapter_id = c.id
+               AND t.context IN ('practice', 'both')
+            LEFT JOIN user_topic_progress p
+                ON p.topic_id = t.id AND p.user_id = %s
+            WHERE s.goal_id = %s
+            GROUP BY s.id, s.name
+            ORDER BY s.id
+        """, (user_id, user["current_goal_id"]))
+        subjects = cur.fetchall()
+
+    # Convert to plain dicts (fetchall returns RealDictRow-like objects)
+    subjects_list = [
+        {
+            "subject_id": s["subject_id"],
+            "subject_name": s["subject_name"],
+            "total_topics": s["total_topics"],
+            "completed_topics": s["completed_topics"],
+        }
+        for s in subjects
+    ]
+
+    return jsonify(
+        success=True,
+        first_name=user["first_name"] or "there",
+        goal_name=user["goal_name"],
+        subjects=subjects_list,
+    )

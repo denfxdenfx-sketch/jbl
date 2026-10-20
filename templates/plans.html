@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plans — {{ goal_name }}</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    /* ─────────── BASE STYLES ─────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: #f4f6f8; 
+      color: #1a202c;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 100px; /* space for sticky footer */
+    }
+
+    /* ─────────── DARK HEADER ─────────── */
+    .top-header {
+      background: #2d4f5c;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    .top-header .logo { font-weight: 800; font-size: 20px; letter-spacing: 1px; }
+    .top-header .nav-links { display: flex; gap: 24px; font-size: 14px; font-weight: 600; }
+    .top-header .nav-links a { color: white; text-decoration: none; }
+    .top-header .nav-links a:hover { opacity: 0.8; }
+    .top-header .actions { display: flex; gap: 12px; align-items: center; }
+    .btn-dashboard { 
+      background: #7bdcf0; color: #2d4f5c; padding: 8px 20px; 
+      border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 14px;
+    }
+
+    /* ─────────── PAGE INTRO ─────────── */
+    .page-intro {
+      text-align: center;
+      padding: 40px 20px 24px;
+    }
+    .page-intro h1 { color: #175e7a; font-size: 28px; margin-bottom: 8px; }
+    .page-intro p { color: #666; font-size: 16px; }
+    .page-intro strong { color: #1a202c; }
+
+    /* ─────────── PLAN LIST ─────────── */
+    .plan-list {
+      max-width: 700px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .plan-item {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .plan-item:hover { border-color: #cbd5e0; }
+
+    /* Selected State */
+    .plan-item.selected {
+      border-color: #5ab4c5;
+      background: #f7fbfc;
+      box-shadow: 0 0 0 3px rgba(90,180,197,0.2);
+    }
+
+    /* Custom Radio Button */
+    .radio-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e0;
+      flex-shrink: 0;
+      position: relative;
+      transition: all 0.15s;
+    }
+    .plan-item.selected .radio-btn {
+      border-color: #5ab4c5;
+      background: white;
+    }
+    .plan-item.selected .radio-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #5ab4c5;
+    }
+
+    /* Content Layout */
+    .plan-content { flex-grow: 1; }
+    
+    .plan-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .plan-duration {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a202c;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .recommended-tag {
+      background: #5ab4c5;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .plan-price-wrap {
+      text-align: right;
+    }
+    .plan-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1a202c;
+    }
+    .plan-strike {
+      font-size: 14px;
+      color: #a0aec0;
+      text-decoration: line-through;
+      margin-left: 6px;
+    }
+
+    .plan-subtext {
+      font-size: 13px;
+      color: #718096;
+      font-weight: 500;
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    /* ─────────── STICKY FOOTER (Checkout) ─────────── */
+    .sticky-footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+      z-index: 100;
+    }
+
+    .footer-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .selected-summary {
+      display: flex;
+      flex-direction: column;
+    }
+    .summary-label {
+      font-size: 13px;
+      color: #718096;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .summary-details {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a202c;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .summary-price {
+      color: #175e7a;
+    }
+
+    .btn-buy-now {
+      background: #5ab4c5;
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-buy-now:hover { background: #4aa0b0; }
+    .btn-buy-now:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+    /* ─────────── STATUS ─────────── */
+    .status-container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .status {
+      text-align: center;
+      margin-top: 16px;
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+      min-height: 20px;
+    }
+    .status.error { color: #c62828; }
+    .status.success { color: #2e7d32; }
+
+    /* ─────────── RESPONSIVE ─────────── */
+    @media (max-width: 600px) {
+      .top-header { flex-direction: column; gap: 16px; padding: 16px; }
+      .top-header .nav-links { flex-wrap: wrap; justify-content: center; }
+      .plan-item { padding: 16px; }
+      .plan-duration { font-size: 16px; }
+      .plan-price { font-size: 18px; }
+      .footer-inner { flex-direction: column; align-items: stretch; gap: 12px; text-align: center; }
+      .selected-summary { align-items: center; }
+      .btn-buy-now { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dark Header -->
+  <header class="top-header">
+    <div class="logo">QBANK</div>
+    <div class="nav-links">
+      <a href="#">FAQs</a>
+      <a href="#">About Us</a>
+      <a href="#">Contact</a>
+    </div>
+    <div class="actions">
+      <a href="/home" class="btn-dashboard">Dashboard</a>
+    </div>
+  </header>
+
+  <!-- Page Intro -->
+  <div class="page-intro">
+    <h1>Choose your plan</h1>
+    <p>Goal: <strong>{{ goal_name }}</strong></p>
+  </div>
+
+  <!-- Status Message (for JS) -->
+  <div class="status-container">
+    <div id="status" class="status"></div>
+  </div>
+
+  <!-- The List of Options -->
+  <div class="plan-list">
+    
+    {% if not plans %}
+      <p style="text-align:center; color:#888;">No plans available yet.</p>
+    {% else %}
+      
+      {% for plan in plans %}
+        <!-- 
+          We add the data attributes here so the JS can read them when clicked.
+          Note: The first item is automatically marked as selected via loop.first.
+        -->
+        <div class="plan-item {% if loop.first %}selected{% endif %}" 
+             data-plan-id="{{ plan.id }}" 
+             data-plan-name="{{ plan.name }}"
+             data-price="{{ plan.price }}"
+             data-currency="{{ plan.currency }}"
+             data-duration="{{ plan.duration_days // 30 }}">
+          
+          <div class="radio-btn"></div>
+          
+          <div class="plan-content">
+            <div class="plan-header-row">
+              <div class="plan-duration">
+                {{ plan.duration_days // 30 }} Months
+                
+                <!-- Show "Recommended" tag on 12 months (adjust 360 to 365 if your DB uses that) -->
+                {% if plan.duration_days == 360 or plan.duration_days == 365 %}
+                  <span class="recommended-tag">Recommended</span>
+                {% endif %}
+              </div>
+              
+              <div class="plan-price-wrap">
+                <span class="plan-price">{{ plan.currency }} {{ plan.price }}</span>
+                <!-- Optional Strike-through: Assuming original price was +9000 for visual effect -->
+                <span class="plan-strike">{{ plan.currency }} {{ plan.price + 9000 }}</span>
+              </div>
+            </div>
+            
+            <!-- Subtext logic matching your reference image -->
+            {% if plan.duration_days >= 270 %}
+              <div class="plan-subtext">Coupon RENEW not applicable. Coupon CLINICALEDGE auto applied</div>
+            {% endif %}
+            
+          </div>
+        </div>
+      {% endfor %}
+
+    {% endif %}
+  </div>
+
+  <!-- Sticky Checkout Footer -->
+  <div class="sticky-footer">
+    <div class="footer-inner">
+      <div class="selected-summary">
+        <span class="summary-label">Selected Plan</span>
+        <div class="summary-details">
+          <span id="summary-duration">12 Months</span> · 
+          <span id="summary-price" class="summary-price">₹ 34,199</span>
+        </div>
+      </div>
+      
+      <button class="btn-buy-now btn-subscribe" type="button">
+        Buy Now
+      </button>
+    </div>
+  </div>
+
+  <!-- ─────────── JAVASCRIPT ─────────── -->
+  <script>
+    const statusEl = document.getElementById('status');
+    const summaryDuration = document.getElementById('summary-duration');
+    const summaryPrice = document.getElementById('summary-price');
+    const buyBtn = document.querySelector('.btn-subscribe');
+    
+    let selectedPlanId = null;
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = 'status' + (cls ? ' ' + cls : '');
+    }
+
+    // 1. Handle selecting a plan
+    document.querySelectorAll('.plan-item').forEach(item => {
+      item.addEventListener('click', function() {
+        // Remove selected class from all
+        document.querySelectorAll('.plan-item').forEach(el => el.classList.remove('selected'));
+        
+        // Add to clicked
+        this.classList.add('selected');
+        
+        // Update sticky footer data
+        selectedPlanId = this.dataset.planId;
+        const duration = this.dataset.duration;
+        const price = this.dataset.price;
+        const currency = this.dataset.currency;
+        
+        summaryDuration.textContent = duration + ' Months';
+        summaryPrice.textContent = currency + ' ' + price;
+        
+        // Enable button
+        buyBtn.disabled = false;
+      });
+    });
+
+    // 2. Initialize footer on page load based on the pre-selected item
+    const initialSelected = document.querySelector('.plan-item.selected');
+    if (initialSelected) {
+      selectedPlanId = initialSelected.dataset.planId;
+      const duration = initialSelected.dataset.duration;
+      const price = initialSelected.dataset.price;
+      const currency = initialSelected.dataset.currency;
+      summaryDuration.textContent = duration + ' Months';
+      summaryPrice.textContent = currency + ' ' + price;
+      buyBtn.disabled = false;
+    }
+
+    // 3. Handle Buy Now
+    buyBtn.addEventListener('click', async () => {
+      if (!selectedPlanId) return;
+
+      const originalText = buyBtn.textContent;
+      buyBtn.disabled = true;
+      buyBtn.textContent = 'Processing...';
+      setStatus('Creating order...');
+
+      try {
+        const res = await fetch('/payment/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan_id: parseInt(selectedPlanId, 10) }),
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          setStatus(data.message || 'Failed to create order', 'error');
+          buyBtn.disabled = false;
+          buyBtn.textContent = originalText;
+          return;
+        }
+
+        // Open Razorpay Checkout
+        const options = {
+          key: data.key_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: 'MyApp',
+          description: data.plan_name,
+          order_id: data.order_id,
+          handler: async function (response) {
+            setStatus('Verifying payment...');
+
+            const verifyRes = await fetch('/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_id: parseInt(selectedPlanId, 10),
+              }),
+            });
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+              setStatus('Subscription activated! Redirecting...', 'success');
+              setTimeout(() => {
+                window.location.href = verifyData.redirect || '/home';
+              }, 800);
+            } else {
+              setStatus(verifyData.message || 'Verification failed', 'error');
+              buyBtn.disabled = false;
+              buyBtn.textContent = originalText;
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setStatus('Payment cancelled.');
+              buyBtn.disabled = false;
+              buyBtn.textContent = originalText;
+            }
+          },
+          theme: { color: '#5ab4c5' },
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } catch (e) {
+        setStatus('Network error: ' + e, 'error');
+        buyBtn.disabled = false;
+        buyBtn.textContent = originalText;
+      }
+    });
+  </script>
+
+</body>
+</html>

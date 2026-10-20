@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Subscribe Required</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; text-align: center; }
+    h1 { color: #175e7a; }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #175e7a;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    .back { margin-top: 20px; display: block; color: #888; }
+  </style>
+</head>
+<body>
+  <h1>🔒 Subscription Required</h1>
+  <p><strong>{{ topic.name }}</strong> is a paid topic.</p>
+  <p>Subscribe to the {{ topic.goal_name }} plan to unlock it.</p>
+
+  <a class="btn" href="/plans">View Plans</a>
+  <a class="back" href="/home">← Back to home</a>
+</body>
+</html>

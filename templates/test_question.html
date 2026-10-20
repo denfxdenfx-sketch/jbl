@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ attempt.test_name }}</title>
+</head>
+<body>
+
+  {% include "sidebar.html" %}
+
+  <header class="page-topbar">
+    <button class="page-menu-btn" onclick="sbToggle()" aria-label="Toggle sidebar">☰</button>
+    <span class="page-topbar-title">{{ attempt.test_name }}</span>
+  </header>
+
+  <main class="page-main">
+    
+    <div class="test-layout">
+      
+      <!-- LEFT: Main Question Area -->
+      <div class="test-main">
+        
+        <div class="test-header">
+          <h1 class="test-title">{{ attempt.test_name }}</h1>
+          <div class="test-timer">⏱ <span id="timer">--:--</span></div>
+        </div>
+
+        <div class="test-progress">
+          Question <strong id="progress">1</strong> of <strong>{{ questions|length }}</strong>
+        </div>
+
+        <div class="test-actions">
+          <button class="btn-action" onclick="toggleBookmark()" id="bookmark-btn">☆ Bookmark</button>
+          <button class="btn-action" onclick="toggleMark()" id="mark-btn">☆ Mark for Review</button>
+          <button class="btn-action btn-exit" onclick="confirmExit()">Exit</button>
+        </div>
+
+        <!-- Question Text (No Box) -->
+        <div class="question-text-wrap">
+          <p id="question-text"></p>
+          <img id="question-image" style="display:none;">
+        </div>
+
+        <!-- Options in 2x2 Grid -->
+        <div id="options-container"></div>
+
+      </div>
+
+      <!-- RIGHT: Question Palette -->
+      <div class="test-palette">
+        <h3 class="palette-title">Questions</h3>
+        
+        <div class="palette-legend">
+          <span><span class="dot dot-answered"></span> Answered</span>
+          <span><span class="dot dot-marked"></span> Marked</span>
+          <span><span class="dot dot-unanswered"></span> Unanswered</span>
+        </div>
+
+        <div id="palette" class="palette-grid"></div>
+        
+        <div class="palette-controls">
+          <button class="btn-secondary" onclick="palettePrev()" id="palette-prev">← Prev</button>
+          <button class="btn-secondary" onclick="paletteNext()" id="palette-next">Next →</button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FIXED BOTTOM NAV (Centered) -->
+  <div class="fixed-bottom-nav">
+    <button class="btn-secondary" onclick="goPrev()" id="prev-btn">← Previous</button>
+    <button class="btn-primary" onclick="goNext()" id="next-btn">Next →</button>
+  </div>
+
+  <!-- Exit Modal -->
+  <div id="exit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h3>Leave Test?</h3>
+      <p>Are you sure? Your progress is saved automatically.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeExit()">Cancel</button>
+        <a href="/tests" class="btn-danger">Yes, Exit</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ATTEMPT_ID = {{ attempt.id }};
+    const QUESTIONS = {{ questions | tojson }};
+    const DRAFTS = {{ drafts | tojson }};
+    const BOOKMARKED_IDS = {{ bookmarked_ids | tojson }};
+    const START_INDEX = {{ start_index }};
+    const REMAINING_SECONDS = {{ remaining_seconds }};
+  </script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; color: #1a202c; background: #f7fafc; line-height: 1.5; padding-bottom: 80px; }
+
+  /* Top bar / Sidebar layout */
+  .page-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: white; border-bottom: 1px solid #e2e8f0; align-items: center; gap: 12px; padding: 0 16px; z-index: 80; }
+  .page-menu-btn { background: none; border: none; font-size: 22px; color: #175e7a; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+  .page-menu-btn:hover { background: #f1f5f8; }
+  .page-topbar-title { font-weight: 600; color: #175e7a; font-size: 15px; }
+
+  .page-main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 768px) { .page-topbar { display: flex; } .page-main { padding: 76px 16px 32px 16px; } }
+
+  /* Layout Grid */
+  .test-layout { display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start; }
+  @media (max-width: 900px) { .test-layout { grid-template-columns: 1fr; } .test-palette { display: none; } }
+
+  /* Left Side - Test Main */
+  .test-main { display: flex; flex-direction: column; gap: 20px; }
+  .test-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .test-title { font-size: 24px; font-weight: 700; color: #1a202c; }
+  .test-timer { font-size: 20px; font-weight: 700; color: #175e7a; background: #e0f2f5; padding: 6px 14px; border-radius: 8px; display: flex; align-items: center; gap: 8px; }
+  
+  .test-progress { font-size: 15px; color: #4a5568; font-weight: 500; }
+  
+  .test-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-action { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; color: #4a5568; cursor: pointer; transition: all 0.15s; }
+  .btn-action:hover { background: #f9fbfc; border-color: #cbd5e0; }
+  .btn-exit { margin-left: auto; color: #c62828; border-color: #ffcdd2; }
+  .btn-exit:hover { background: #ffebee; border-color: #e57373; }
+
+  /* Question Text (No Box) */
+  .question-text-wrap { margin-top: 10px; margin-bottom: 10px; }
+  #question-text { font-size: 20px; line-height: 1.5; color: #1a202c; font-weight: 500; }
+  #question-image { max-width: 100%; border-radius: 8px; margin-top: 16px; display: block; }
+
+  /* 2x2 Grid for Options */
+  #options-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    #options-container { grid-template-columns: 1fr; }
+  }
+
+  /* The Option Buttons (Separate Boxes) */
+  #options-container button {
+    width: 100%;
+    text-align: left;
+    padding: 20px 24px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    color: #1a202c;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    min-height: 80px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  #options-container button:hover {
+    background: #f9fbfc;
+    border-color: #cbd5e0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+  }
+  #options-container button.selected {
+    background: #e0f2f5;
+    border-color: #5ab4c5;
+    font-weight: 600;
+    color: #175e7a;
+    box-shadow: 0 0 0 2px #5ab4c5;
+  }
+
+  /* FIXED BOTTOM NAV (Centered) */
+  .fixed-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: center; /* ✨ Centers the buttons */
+    gap: 16px;               /* Space between the two buttons */
+    z-index: 60;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
+  }
+  
+  .fixed-bottom-nav button {
+    width: 180px; /* Fixed width for both buttons */
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-primary { background: #5ab4c5; color: white; border: none; transition: background 0.15s; }
+  .btn-primary:hover { background: #4aa0b0; }
+  .btn-secondary { background: white; color: #175e7a; border: 1px solid #e2e8f0; transition: all 0.15s; }
+  .btn-secondary:hover { background: #f9fbfc; border-color: #5ab4c5; }
+
+  /* Right Side - Palette */
+  .test-palette { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; position: sticky; top: 20px; }
+  .palette-title { font-size: 16px; font-weight: 700; color: #1a202c; margin-bottom: 12px; }
+  .palette-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #666; margin-bottom: 16px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+  .dot-answered { background: #7ecb5e; }
+  .dot-marked { background: #e57373; }
+  .dot-unanswered { background: #e2e8f0; }
+
+  .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+  .palette-grid button { aspect-ratio: 1; border-radius: 8px; border: 1px solid #e2e8f0; background: #f9fbfc; font-size: 14px; font-weight: 600; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: all 0.1s; }
+  .palette-grid button:hover { border-color: #5ab4c5; }
+  .palette-grid button.current { outline: 2px solid #175e7a; outline-offset: 1px; }
+  .palette-grid button.answered { background: #e8f5e9; border-color: #b7e0b9; color: #2e7d32; }
+  .palette-grid button.marked { background: #ffebee; border-color: #efc3c3; color: #c62828; }
+
+  .palette-controls { display: flex; gap: 8px; }
+  .palette-controls button { flex: 1; padding: 8px; font-size: 13px; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: white; padding: 24px; border-radius: 14px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .modal-box h3 { font-size: 20px; color: #1a202c; margin-bottom: 8px; }
+  .modal-box p { color: #4a5568; margin-bottom: 20px; font-size: 15px; }
+  .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+  .btn-danger { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .btn-danger:hover { background: #ffcdd2; }
+</style>
+
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/test_question.js') }}"></script>
+</body>
+</html>
