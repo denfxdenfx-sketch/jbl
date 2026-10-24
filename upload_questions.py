@@ -1,125 +1,102 @@
-import  csv
+import csv
 import sys
 sys.path.insert(0, '.')
 from db import db_cursor
 
-# 1. CONFIGURATION
-CSV_FILENAME = 'questions.csv'
-SUBJECT_NAME = 'Ophthalmology' # Change this to match your DB
-GOAL_NAME = 'NEET PG'          # Change this to match your DB
-
-# Maps "10" -> category code "10-marker", etc.
-CATEGORY_MAP = {
-    '15': '15-marker',
-    '10': '10-marker',
-    'Short Notes': 'short-notes',
-    'Explain': 'explain'
-}
-
-def get_or_create_hierarchy(cur, goal_id, chapter_name, topic_name):
-    """Finds or creates the Subject, Chapter, and Topic, returning the topic_id."""
-    
-    # A. Get or Create Subject
-    cur.execute("SELECT id FROM subjects WHERE name = %s AND goal_id = %s", (SUBJECT_NAME, goal_id))
-    row = cur.fetchone()
-    if row:
-        subject_id = row['id']
-    else:
-        cur.execute("INSERT INTO subjects (goal_id, name) VALUES (%s, %s) RETURNING id", (goal_id, SUBJECT_NAME))
-        subject_id = cur.fetchone()['id']
-        print(f"  Created Subject: {SUBJECT_NAME}")
-
-    # B. Get or Create Chapter
-    cur.execute("SELECT id FROM chapters WHERE name = %s AND subject_id = %s", (chapter_name, subject_id))
-    row = cur.fetchone()
-    if row:
-        chapter_id = row['id']
-    else:
-        cur.execute("INSERT INTO chapters (subject_id, name) VALUES (%s, %s) RETURNING id", (subject_id, chapter_name))
-        chapter_id = cur.fetchone()['id']
-        print(f"    Created Chapter: {chapter_name}")
-
-    # C. Get or Create QBank Topic
-    cur.execute("SELECT id FROM qbank_topics WHERE name = %s AND chapter_id = %s", (topic_name, chapter_id))
-    row = cur.fetchone()
-    if row:
-        topic_id = row['id']
-    else:
-        cur.execute("INSERT INTO qbank_topics (chapter_id, name, access_level, position) VALUES (%s, %s, 'free', 1) RETURNING id", (chapter_id, topic_name))
-        topic_id = cur.fetchone()['id']
-        print(f"      Created Topic: {topic_name}")
-
-    return topic_id
+CSV_FILENAME = 'ophthalmology_qbank.csv'  # Ensure this matches your file name!
+GOAL_NAME = 'NEET PG'
+SUBJECT_NAME = 'Ophthalmology'
 
 def main():
-    print("Starting upload...")
+    print(f"🚀 Starting import from {CSV_FILENAME}...")
     
     with db_cursor() as cur:
-        # 1. Get the Goal ID
+        # 1. Get the Goal
         cur.execute("SELECT id FROM goals WHERE name = %s", (GOAL_NAME,))
-        goal_row = cur.fetchone()
-        if not goal_row:
-            print(f"Error: Goal '{GOAL_NAME}' not found in DB.")
+        goal = cur.fetchone()
+        if not goal:
+            print(f"❌ Error: Goal '{GOAL_NAME}' not found in database.")
             return
-        goal_id = goal_row['id']
+        goal_id = goal['id']
 
-        # 2. Get Category IDs
+        # 2. Get Category IDs (e.g., '10-marker' -> 2, '5-marker' -> 5)
         cur.execute("SELECT id, code FROM question_categories")
         cats = {r['code']: r['id'] for r in cur.fetchall()}
 
-        # 3. Open the CSV
-        with open(CSV_FILENAME, mode='r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            
-            count = 0
-            for row in reader:
-                # Skip empty rows or headers
-                if not row['Question'] or row['Question'].strip() == '': continue
+        # 3. Open CSV
+        try:
+            with open(CSV_FILENAME, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                count = 0
                 
-                chapter_name = row['Chapter'].strip()
-                topic_name = row['Topic'].strip()
-                marks = row['Marks'].strip()
-                
-                # Figure out which category this belongs to
-                cat_code = CATEGORY_MAP.get(marks)
-                if not cat_code:
-                    print(f"Skipping row (unknown marks type '{marks}')")
-                    continue
-                
-                category_id = cats.get(cat_code)
-                if not category_id:
-                    print(f"Skipping row (category '{cat_code}' not found in DB)")
-                    continue
+                for row in reader:
+                    # Skip empty rows
+                    if not row.get('Question') or not row['Question'].strip():
+                        continue
+                        
+                    chapter_name = row['Chapter'].strip()
+                    topic_name = row['Topic'].strip()
+                    marks_str = row['Marks'].strip() # e.g., "10", "5", "15"
+                    
+                    # Map "10" -> "10-marker", "5" -> "5-marker"
+                    cat_code = f"{marks_str}-marker" 
+                    category_id = cats.get(cat_code)
+                    
+                    if not category_id:
+                        print(f"⚠️ Skipping question: Category '{cat_code}' not found in DB.")
+                        continue
 
-                # Handle Year (Convert "General" to NULL, or int)
-                exam_year = None
-                exam_type = None
-                if row['Year'].strip().isdigit():
-                    exam_year = int(row['Year'].strip())
-                    exam_type = 'regular'
+                    # --- HIERARCHY CREATION ---
+                    
+                    # A. Subject
+                    cur.execute("SELECT id FROM subjects WHERE name = %s AND goal_id = %s", (SUBJECT_NAME, goal_id))
+                    subj = cur.fetchone()
+                    if not subj:
+                        cur.execute("INSERT INTO subjects (goal_id, name) VALUES (%s, %s) RETURNING id", (goal_id, SUBJECT_NAME))
+                        subj_id = cur.fetchone()['id']
+                    else:
+                        subj_id = subj['id']
 
-                # Get the topic_id (creates chapter/topic if missing)
-                topic_id = get_or_create_hierarchy(cur, goal_id, chapter_name, topic_name)
+                    # B. Chapter
+                    cur.execute("SELECT id FROM chapters WHERE name = %s AND subject_id = %s", (chapter_name, subj_id))
+                    ch = cur.fetchone()
+                    if not ch:
+                        cur.execute("INSERT INTO chapters (subject_id, name, position) VALUES (%s, %s, 1) RETURNING id", (subj_id, chapter_name))
+                        ch_id = cur.fetchone()['id']
+                    else:
+                        ch_id = ch['id']
 
-                # Insert the question
-                cur.execute("""
-                    INSERT INTO qbank_questions 
+                    # C. QBank Topic
+                    cur.execute("SELECT id FROM qbank_topics WHERE name = %s AND chapter_id = %s", (topic_name, ch_id))
+                    tp = cur.fetchone()
+                    if not tp:
+                        cur.execute("INSERT INTO qbank_topics (chapter_id, name, access_level, position) VALUES (%s, %s, 'free', 1) RETURNING id", (ch_id, topic_name))
+                        tp_id = cur.fetchone()['id']
+                    else:
+                        tp_id = tp['id']
+
+                    # --- INSERT QUESTION ---
+                    cur.execute("""
+                        INSERT INTO qbank_questions 
                         (qbank_topic_id, text, answer, category_id, position, exam_year, exam_type)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    topic_id, 
-                    row['Question'].strip(), 
-                    row['Answer'].strip(), 
-                    category_id,
-                    count + 1,
-                    exam_year,
-                    exam_type
-                ))
-                
-                count += 1
-                print(f"  Inserted Question {count}: {row['Question'][:30]}...")
+                        VALUES (%s, %s, %s, %s, %s, NULL, NULL)
+                    """, (
+                        tp_id, 
+                        row['Question'].strip(), 
+                        row['Answer'].strip(), 
+                        category_id,
+                        count + 1
+                    ))
+                    
+                    count += 1
+                    print(f"        ✅ Inserted Q{count} ({marks_str} marks): {row['Question'][:30]}...")
 
-    print(f"\n✅ Finished! Uploaded {count} questions.")
+            print(f"\n🎉 Finished! Successfully imported {count} questions.")
+
+        except FileNotFoundError:
+            print(f"❌ Error: Could not find '{CSV_FILENAME}' in the container. Did you push it?")
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
 
 if __name__ == "__main__":
     main()
